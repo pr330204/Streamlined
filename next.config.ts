@@ -33,6 +33,12 @@ const nextConfig: NextConfig = {
         hostname: 'uploads.onecompiler.io',
         port: '',
         pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'i3.ytimg.com',
+        port: '',
+        pathname: '/**',
       }
     ],
   },
