@@ -37,15 +37,14 @@ export default function Home() {
 
       fetchYouTubeDataForMovies(youtubeMovies).then(ytMoviesWithData => {
          const allMovies = [...ytMoviesWithData, ...otherMovies];
-         const longVideos = allMovies.filter(movie => !movie.duration || movie.duration > 300);
          
-         longVideos.sort((a, b) => {
+         allMovies.sort((a, b) => {
             const dateA = new Date(a.createdAt as string).getTime();
             const dateB = new Date(b.createdAt as string).getTime();
             return dateB - dateA;
          });
 
-         setMovies(longVideos);
+         setMovies(allMovies);
          setLoading(false);
       });
     });
