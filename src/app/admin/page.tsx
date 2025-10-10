@@ -13,6 +13,9 @@ import AdminDeletePanel from "./delete/page";
 import AdminChatPanel from "./chat/page";
 import AdminUsersPanel from "./users/page";
 import { Video, Trash2, Users, MessageSquare } from "lucide-react";
+import { db } from "@/lib/firebase";
+import { addDoc, collection, serverTimestamp } from "firebase/firestore";
+import type { Movie } from "@/lib/types";
 
 
 const ADMIN_PASSWORD = "Prashant";
@@ -35,6 +38,20 @@ export default function AdminPage() {
       });
     }
     setPassword("");
+  };
+
+  const handleAddMovie = async (movie: Omit<Movie, "id" | "votes" | "createdAt" | "duration">) => {
+    const movieData: any = {
+      ...movie,
+      votes: 0,
+      createdAt: serverTimestamp(),
+    };
+
+    if (!movieData.thumbnailUrl) {
+      delete movieData.thumbnailUrl;
+    }
+    
+    await addDoc(collection(db, "movies"), movieData);
   };
 
   return (
@@ -100,7 +117,7 @@ export default function AdminPage() {
       <AddMovieDialog
         isOpen={isAddMovieOpen}
         onOpenChange={setAddMovieOpen}
-        onMovieAdded={() => {}}
+        onMovieAdded={handleAddMovie}
       />
     </div>
   );
