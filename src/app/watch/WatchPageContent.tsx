@@ -136,6 +136,19 @@ export default function WatchPageContent() {
     }
   };
 
+  const handleDownload = () => {
+    if (!movie?.url) return;
+
+    // Directly opening the URL in a new tab will trigger a download for most direct video links
+    // or open them in a way the browser finds appropriate.
+    window.open(movie.url, '_blank', 'noopener,noreferrer');
+    
+    toast({
+        title: "Download Started",
+        description: "Your video is being downloaded.",
+    });
+  };
+
   const handleComingSoon = () => {
     toast({
       title: 'Feature Coming Soon',
@@ -306,7 +319,7 @@ export default function WatchPageContent() {
               <Heart className={`h-6 w-6 ${isLiked ? 'text-red-500 fill-current' : ''}`}/>
               <span className="text-xs font-semibold">{movie.votes ? formatNumber(movie.votes) : 'Like'}</span>
             </button>
-             <button onClick={handleComingSoon} className="flex flex-col items-center space-y-1 text-muted-foreground hover:text-foreground transition-colors">
+             <button onClick={handleDownload} className="flex flex-col items-center space-y-1 text-muted-foreground hover:text-foreground transition-colors">
               <Download className="h-6 w-6"/>
               <span className="text-xs font-semibold">Download</span>
             </button>
