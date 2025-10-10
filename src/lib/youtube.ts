@@ -15,12 +15,17 @@ export interface YouTubeShortsResponse {
 
 
 export async function fetchYouTubeDataForMovies(movies: Movie[]): Promise<Movie[]> {
+  if (!YOUTUBE_API_KEY) {
+    console.log("YouTube API Key not found, skipping API call.");
+    return movies;
+  }
+
   const videoIds = movies
     .map((movie) => getYouTubeVideoId(movie.url))
     .filter(Boolean) as string[];
   
   // If there are no YouTube video IDs to process, return the original movies array.
-  if (videoIds.length === 0 || !YOUTUBE_API_KEY) return movies;
+  if (videoIds.length === 0) return movies;
 
   const apiUrl = `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics,contentDetails&id=${videoIds.join(
     ','
