@@ -24,7 +24,6 @@ export async function fetchYouTubeDataForMovies(movies: Movie[]): Promise<Movie[
     .map((movie) => getYouTubeVideoId(movie.url))
     .filter(Boolean) as string[];
   
-  // If there are no YouTube video IDs to process, return the original movies array.
   if (videoIds.length === 0) return movies;
 
   const apiUrl = `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics,contentDetails&id=${videoIds.join(
@@ -62,14 +61,13 @@ export async function fetchYouTubeDataForMovies(movies: Movie[]): Promise<Movie[
             channelThumbnailUrl: channelDataMap.get(videoId) || movie.channelThumbnailUrl,
           };
         }
-        // If it's not a YouTube video, return the original movie object unchanged.
         return movie;
       });
     }
     return movies;
   } catch (error) {
     console.error('Error fetching YouTube data:', error);
-    return movies; // Return original movies if API fails
+    return movies;
   }
 }
 
@@ -90,11 +88,19 @@ async function fetchChannelDataForMovies(youtubeItems: any[]): Promise<Movie[]> 
         data.items.map((item: any) => [item.id, item.snippet.thumbnails.default?.url])
       );
 
-      return youtubeItems.map(item => ({
-        id: item.id,
+      // This part is a bit tricky. We are mapping over youtubeItems which are from the VIDEOS endpoint
+      // to create a map of channel IDs to channel thumbnails.
+      // Then we create Movie-like objects to pass this data back.
+      // The calling function then needs to map this back to the original movies.
+      const movieLikeObjects = youtubeItems.map(item => ({
+        // We only care about these properties for mapping
+        id: item.id, // videoId
         url: `https://www.youtube.com/watch?v=${item.id}`,
+        channelId: item.snippet.channelId,
         channelThumbnailUrl: channelThumbnailMap.get(item.snippet.channelId),
-      } as Movie));
+      } as any));
+
+      return movieLikeObjects;
     }
     return [];
   } catch (error) {
