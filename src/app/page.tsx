@@ -33,18 +33,23 @@ export default function Home() {
       const youtubeMovies = moviesFromDb.filter(movie => getYouTubeVideoId(movie.url));
       const otherMovies = moviesFromDb.filter(movie => !getYouTubeVideoId(movie.url));
 
-      fetchYouTubeDataForMovies(youtubeMovies).then(ytMoviesWithData => {
-         const allMovies = [...ytMoviesWithData, ...otherMovies];
-         
-         allMovies.sort((a, b) => {
-            const dateA = new Date(a.createdAt as string).getTime();
-            const dateB = new Date(b.createdAt as string).getTime();
-            return dateB - dateA;
-         });
+      if (youtubeMovies.length > 0) {
+        fetchYouTubeDataForMovies(youtubeMovies).then(ytMoviesWithData => {
+           const allMovies = [...ytMoviesWithData, ...otherMovies];
+           
+           allMovies.sort((a, b) => {
+              const dateA = new Date(a.createdAt as string).getTime();
+              const dateB = new Date(b.createdAt as string).getTime();
+              return dateB - dateA;
+           });
 
-         setMovies(allMovies);
-         setLoading(false);
-      });
+           setMovies(allMovies);
+           setLoading(false);
+        });
+      } else {
+        setMovies(otherMovies);
+        setLoading(false);
+      }
     });
 
     return () => unsub();
