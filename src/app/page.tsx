@@ -10,7 +10,7 @@ import { collection, onSnapshot, addDoc, serverTimestamp, query, orderBy, Timest
 import { MovieList } from "@/components/movie-list";
 import AdMobBanner from "@/components/admob-banner";
 import { fetchYouTubeDataForMovies } from "@/lib/youtube";
-import { isPlayableOrGoogleDrive, getYouTubeVideoId } from "@/lib/utils";
+import { getYouTubeVideoId } from "@/lib/utils";
 
 export default function Home() {
   const [movies, setMovies] = useState<Movie[]>([]);
@@ -30,10 +30,8 @@ export default function Home() {
         } as Movie
       });
       
-      const playableMovies = moviesFromDb.filter(movie => isPlayableOrGoogleDrive(movie.url));
-      
-      const youtubeMovies = playableMovies.filter(movie => getYouTubeVideoId(movie.url));
-      const otherMovies = playableMovies.filter(movie => !getYouTubeVideoId(movie.url));
+      const youtubeMovies = moviesFromDb.filter(movie => getYouTubeVideoId(movie.url));
+      const otherMovies = moviesFromDb.filter(movie => !getYouTubeVideoId(movie.url));
 
       fetchYouTubeDataForMovies(youtubeMovies).then(ytMoviesWithData => {
          const allMovies = [...ytMoviesWithData, ...otherMovies];
