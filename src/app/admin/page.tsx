@@ -40,9 +40,9 @@ export default function AdminPage() {
     setPassword("");
   };
 
-  const handleAddMovie = async (movie: Omit<Movie, "id" | "votes" | "createdAt" | "duration">) => {
+  const handleAddMovie = async (movie: Omit<Movie, "id" | "votes" | "createdAt">) => {
     try {
-      const movieData = {
+       const movieData = {
         ...movie,
         votes: 0,
         createdAt: serverTimestamp(),
@@ -133,3 +133,5 @@ export default function AdminPage() {
     </div>
   );
 }
+
+    

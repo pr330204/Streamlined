@@ -3,14 +3,20 @@ import type { Timestamp } from "firebase/firestore";
 
 export type MovieCategory = 'movie' | 'web-series' | 'podcast' | 'tv-channel' | 'other';
 
+export interface Episode {
+  title: string;
+  url: string;
+}
+
 export interface Movie {
   id: string;
   title: string;
-  url: string;
+  url?: string; // Optional for web-series
   votes: number;
   createdAt: Timestamp | string;
   thumbnailUrl?: string;
   category?: MovieCategory;
+  episodes?: Episode[];
   // YouTube API data
   channelTitle?: string;
   viewCount?: string;
@@ -41,3 +47,5 @@ export interface ChatThread {
     lastMessage: string;
     lastUpdated: Timestamp;
 }
+
+    

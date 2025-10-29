@@ -5,10 +5,10 @@ import { useEffect, useState, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { doc, getDoc, collection, onSnapshot, query, orderBy, limit, Timestamp, updateDoc, increment } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { Movie } from '@/lib/types';
+import type { Movie, Episode } from '@/lib/types';
 import { Header } from '@/components/header';
 import { Button } from '@/components/ui/button';
-import { Heart, Download, ListPlus, Share2, PlayCircle } from 'lucide-react';
+import { Heart, Download, ListPlus, Share2, PlayCircle, Clapperboard } from 'lucide-react';
 import { MovieList } from '@/components/movie-list';
 import { getYouTubeEmbedUrl, getGoogleDriveEmbedUrl, isLiveStream, formatNumber, getYouTubeVideoId } from '@/lib/utils';
 import Image from 'next/image';
@@ -28,6 +28,7 @@ export default function WatchPageContent() {
   const [isClient, setIsClient] = useState(false);
   const [showPlayer, setShowPlayer] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
+  const [currentEpisode, setCurrentEpisode] = useState<Episode | null>(null);
   const { toast } = useToast();
 
 
@@ -43,6 +44,7 @@ export default function WatchPageContent() {
 
     setLoading(true);
     setShowPlayer(false);
+    setCurrentEpisode(null);
     const docRef = doc(db, 'movies', docId);
 
     const unsub = onSnapshot(docRef, async (docSnap) => {
@@ -93,22 +95,19 @@ export default function WatchPageContent() {
   
     const otherMovies = allMovies.filter(m => m.id !== movie.id);
   
-    // Logic to find movies from the same series
     const currentTitleLower = movie.title.toLowerCase();
     const baseTitleMatch = currentTitleLower.match(/^([a-zA-Z\s]+)/);
     const baseTitle = baseTitleMatch ? baseTitleMatch[1].trim() : currentTitleLower;
     
     let similarByTitle: Movie[] = [];
-    if (baseTitle.length > 3) { // Avoid matching short common words
+    if (baseTitle.length > 3) {
       similarByTitle = otherMovies.filter(m =>
         m.title.toLowerCase().startsWith(baseTitle)
       );
     }
   
-    // Fallback to popular movies
-    const popular = otherMovies.sort((a, b) => b.votes - a.votes);
+    const popular = otherMovies.sort((a, b) => (b.votes || 0) - (a.votes || 0));
   
-    // Combine lists, ensuring no duplicates
     const recommendations = [...similarByTitle];
     const recommendationIds = new Set(recommendations.map(r => r.id));
   
@@ -122,7 +121,10 @@ export default function WatchPageContent() {
     return recommendations.slice(0, 10);
   }, [movie, allMovies]);
   
-  const currentVideoUrl = movie?.url;
+  const currentVideoUrl = useMemo(() => {
+    if (currentEpisode) return currentEpisode.url;
+    return movie?.url;
+  }, [movie, currentEpisode]);
 
   const embedUrl = useMemo(() => {
     if (!currentVideoUrl) return null;
@@ -145,13 +147,10 @@ export default function WatchPageContent() {
   }, [currentVideoUrl]);
 
   const handleWatchNow = () => {
-    if (currentVideoUrl) {
-      if(canPlayDirectly) {
-        setShowPlayer(true);
-      } else {
-        window.open(currentVideoUrl, '_blank', 'noopener,noreferrer');
-      }
+    if (movie?.category === 'web-series' && movie.episodes && movie.episodes.length > 0 && !currentEpisode) {
+      setCurrentEpisode(movie.episodes[0]);
     }
+    setShowPlayer(true);
   };
 
   const handleShare = async () => {
@@ -256,7 +255,7 @@ export default function WatchPageContent() {
   const metadata = [
     { label: "Season", value: "S1E1" },
     { label: "Language", value: "Dual [Hindi-English]" },
-    { label: "Category", value: "Crime, Documentary" },
+    { label: "Category", value: movie.category },
     { label: "Industry", value: "Netflix" },
   ];
 
@@ -320,7 +319,9 @@ export default function WatchPageContent() {
           <div className="flex gap-4 items-start">
             <div className="flex-1 space-y-2">
               <h1 className="text-2xl font-bold">{movie.title}</h1>
-              {!isLiveStream(movie.url) && metadata.map(item => (
+              <p className="text-sm text-muted-foreground">{currentEpisode ? `Now Playing: ${currentEpisode.title}` : ''}</p>
+              
+              {movie.category !== 'web-series' && !isLiveStream(movie.url) && metadata.map(item => (
                 <div key={item.label} className="text-sm">
                   <span className="font-semibold text-primary">{item.label}: </span>
                   <span className="text-muted-foreground">{item.value}</span>
@@ -341,8 +342,36 @@ export default function WatchPageContent() {
 
           <Button size="lg" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-lg" onClick={handleWatchNow}>
             <PlayCircle className="mr-2 h-6 w-6" />
-            {showPlayer ? 'Close Player' : 'Watch Now'}
+            {showPlayer ? 'Close Player' : (movie.category === 'web-series' ? 'Play First Episode' : 'Watch Now')}
           </Button>
+
+          {movie.category === 'web-series' && movie.episodes && movie.episodes.length > 0 && (
+            <div>
+              <h2 className="text-lg font-semibold mb-2">Episodes</h2>
+              <div className="grid grid-cols-1 gap-2">
+                {movie.episodes.map((episode, index) => (
+                  <button
+                    key={index}
+                    onClick={() => {
+                      setCurrentEpisode(episode);
+                      setShowPlayer(true);
+                    }}
+                    className={cn(
+                      "w-full text-left p-3 rounded-md transition-colors",
+                      currentEpisode?.title === episode.title
+                        ? "bg-primary/20 text-primary"
+                        : "hover:bg-muted"
+                    )}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Clapperboard className="h-5 w-5" />
+                      <span className="font-medium">{episode.title}</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="py-2">
             <AdMobBanner />
@@ -377,3 +406,5 @@ export default function WatchPageContent() {
     </div>
   );
 }
+
+    
