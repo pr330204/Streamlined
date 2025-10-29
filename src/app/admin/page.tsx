@@ -41,13 +41,28 @@ export default function AdminPage() {
   };
 
   const handleAddMovie = async (movie: Omit<Movie, "id" | "votes" | "createdAt" | "duration">) => {
-    const movieData = {
-      ...movie,
-      votes: 0,
-      createdAt: serverTimestamp(),
-    };
-    
-    await addDoc(collection(db, "movies"), movieData);
+    try {
+      const movieData = {
+        ...movie,
+        votes: 0,
+        createdAt: serverTimestamp(),
+      };
+      
+      await addDoc(collection(db, "movies"), movieData);
+      
+      toast({
+        title: "Success!",
+        description: "Video added successfully.",
+      });
+      setAddMovieOpen(false); // Close the dialog on success
+    } catch (error) {
+      console.error("Error adding movie:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Could not add the video. Please try again.",
+      });
+    }
   };
 
   return (

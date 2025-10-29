@@ -30,16 +30,3 @@ export async function suggestMovieAction(values: SuggestMovieInput) {
     };
   }
 }
-
-// This is a simplified action that bypasses any AI validation.
-// The form dialog now handles its own validation logic.
-export async function checkMovieLinkAction(values: any) {
-    // We can add more robust server-side validation here if needed in the future.
-    // For now, we trust the client-side validation and just pass it through.
-    
-    // Bypassing the AI check and assuming the link is valid if it passes schema validation.
-    return {
-        success: true,
-        message: "Video link is valid and will be added.",
-    };
-}

@@ -24,7 +24,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { checkMovieLinkAction } from "@/lib/actions";
 import { Loader2, Trash2 } from "lucide-react";
 import type { Movie, Episode } from "@/lib/types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -77,7 +76,6 @@ export function AddMovieDialog({ isOpen, onOpenChange, onMovieAdded }: AddMovieD
   const category = form.watch("category");
 
   useEffect(() => {
-    // Reset fields when category changes to keep form clean
     const currentTitle = form.getValues("movieTitle");
     const currentCategory = form.getValues("category");
     form.reset({
@@ -99,53 +97,40 @@ export function AddMovieDialog({ isOpen, onOpenChange, onMovieAdded }: AddMovieD
   };
 
   const onSubmit = (values: AddMovieFormValues) => {
-    startTransition(async () => {
-      if (values.category === 'web-series' && (!values.episodes || values.episodes.length === 0 || !values.episodes.every(ep => ep.url))) {
-        form.setError("episodes", { type: "manual", message: "At least one episode with a valid URL is required for a web series." });
-        return;
-      }
-
-      if (values.category !== 'web-series' && (!values.movieLink || !values.movieLink.trim())) {
-        form.setError("movieLink", { type: "manual", message: "Movie Link is required for this category." });
-        return;
+    startTransition(() => {
+      if (values.category === 'web-series') {
+        if (!values.episodes || values.episodes.length === 0 || !values.episodes.every(ep => ep.url)) {
+          form.setError("episodes", { type: "manual", message: "At least one episode with a valid URL is required for a web series." });
+          return;
+        }
+      } else {
+        if (!values.movieLink || !values.movieLink.trim() || !z.string().url().safeParse(values.movieLink).success) {
+          form.setError("movieLink", { type: "manual", message: "A valid Movie Link URL is required for this category." });
+          return;
+        }
       }
       
-      const result = await checkMovieLinkAction(values);
+      let moviePayload: Omit<Movie, "id" | "votes" | "createdAt" | "duration">;
 
-      if (result.success) {
-        toast({
-          title: "Success!",
-          description: "Video added successfully.",
-        });
-        
-        let moviePayload: Omit<Movie, "id" | "votes" | "createdAt" | "duration">;
-
-        if (values.category === 'web-series') {
-            moviePayload = { 
-                title: values.movieTitle,
-                url: '', // Main URL is not needed for web series container
-                thumbnailUrl: values.thumbnailUrl || undefined,
-                category: values.category,
-                episodes: values.episodes,
-            };
-        } else {
-             moviePayload = { 
-                title: values.movieTitle,
-                url: values.movieLink || '',
-                thumbnailUrl: values.thumbnailUrl || undefined,
-                category: values.category,
-            };
-        }
-
-        onMovieAdded(moviePayload);
-        handleDialogClose(false);
+      if (values.category === 'web-series') {
+          moviePayload = { 
+              title: values.movieTitle,
+              url: '', // Main URL is not needed for web series container
+              thumbnailUrl: values.thumbnailUrl || undefined,
+              category: values.category,
+              episodes: values.episodes,
+          };
       } else {
-        toast({
-          variant: "destructive",
-          title: "Validation Failed",
-          description: result.message,
-        });
+           moviePayload = { 
+              title: values.movieTitle,
+              url: values.movieLink || '',
+              thumbnailUrl: values.thumbnailUrl || undefined,
+              category: values.category,
+          };
       }
+
+      onMovieAdded(moviePayload);
+      // No need to call handleDialogClose here, it's handled in the parent on success
     });
   };
 
