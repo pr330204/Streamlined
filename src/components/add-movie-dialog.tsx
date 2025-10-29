@@ -28,11 +28,13 @@ import { checkMovieLinkAction } from "@/lib/actions";
 import { Loader2 } from "lucide-react";
 import type { Movie } from "@/lib/types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const formSchema = z.object({
   movieTitle: z.string().min(1, "Movie title is required."),
   movieLink: z.string().url("Please enter a valid URL."),
   thumbnailUrl: z.string().url("Please enter a valid URL for the thumbnail.").optional().or(z.literal('')),
+  category: z.enum(["movie", "web-series", "podcast", "other"]),
 });
 
 type AddMovieFormValues = z.infer<typeof formSchema>;
@@ -54,6 +56,7 @@ export function AddMovieDialog({ isOpen, onOpenChange, onMovieAdded }: AddMovieD
       movieTitle: "",
       movieLink: "",
       thumbnailUrl: "",
+      category: "movie",
     },
   });
   
@@ -85,6 +88,7 @@ export function AddMovieDialog({ isOpen, onOpenChange, onMovieAdded }: AddMovieD
             title: values.movieTitle, 
             url: values.movieLink,
             thumbnailUrl: values.thumbnailUrl || undefined,
+            category: values.category,
         });
         handleDialogClose(false);
       } else {
@@ -109,8 +113,33 @@ export function AddMovieDialog({ isOpen, onOpenChange, onMovieAdded }: AddMovieD
               </DialogDescription>
             </DialogHeader>
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-                <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full pt-4">
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                
+                <FormField
+                  control={form.control}
+                  name="category"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Category</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a category" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="movie">Movie</SelectItem>
+                          <SelectItem value="web-series">Web Series</SelectItem>
+                          <SelectItem value="podcast">Podcast</SelectItem>
+                          <SelectItem value="other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                   <TabsList className="grid w-full grid-cols-3">
                     <TabsTrigger value="youtube">YouTube</TabsTrigger>
                     <TabsTrigger value="google-drive">Google Drive</TabsTrigger>

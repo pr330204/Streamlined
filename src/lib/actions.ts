@@ -33,8 +33,9 @@ export async function suggestMovieAction(values: SuggestMovieInput) {
 
 const addMovieSchema = z.object({
     movieTitle: z.string().min(1, "Movie title is required."),
-    movieLink: z.string().min(1, "Please enter a valid URL."),
+    movieLink: z.string().url("Please enter a valid URL."),
     thumbnailUrl: z.string().url("Please enter a valid URL for the thumbnail.").optional().or(z.literal('')),
+    category: z.enum(["movie", "web-series", "podcast", "other"]),
 });
 
 // This is a simplified action that bypasses the AI validation.

@@ -45,6 +45,7 @@ export default function AdminPage() {
       ...movie,
       votes: 0,
       createdAt: serverTimestamp(),
+      category: movie.category || 'other',
     };
 
     if (!movieData.thumbnailUrl) {

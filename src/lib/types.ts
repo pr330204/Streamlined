@@ -1,6 +1,8 @@
 
 import type { Timestamp } from "firebase/firestore";
 
+export type MovieCategory = 'movie' | 'web-series' | 'podcast' | 'other';
+
 export interface Movie {
   id: string;
   title: string;
@@ -8,6 +10,7 @@ export interface Movie {
   votes: number;
   createdAt: Timestamp | string;
   thumbnailUrl?: string;
+  category?: MovieCategory;
   // YouTube API data
   channelTitle?: string;
   viewCount?: string;
