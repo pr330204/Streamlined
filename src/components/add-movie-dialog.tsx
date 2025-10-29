@@ -33,7 +33,7 @@ import { Label } from "./ui/label";
 
 const episodeSchema = z.object({
   title: z.string().min(1, "Episode title is required."),
-  url: z.string().url("Please enter a valid URL."),
+  url: z.string().min(1, "Please enter a valid URL."),
 });
 
 const formSchema = z.object({
@@ -101,7 +101,7 @@ export function AddMovieDialog({ isOpen, onOpenChange, onMovieAdded }: AddMovieD
       let moviePayload: Omit<Movie, "id" | "votes" | "createdAt" | "duration">;
 
       if (values.category === 'web-series') {
-        if (!values.episodes || values.episodes.length === 0 || !values.episodes.every(ep => ep.url && z.string().url().safeParse(ep.url).success)) {
+        if (!values.episodes || values.episodes.length === 0 || !values.episodes.every(ep => ep.url)) {
           form.setError("episodes", { type: "manual", message: "At least one episode with a valid URL is required for a web series." });
           return;
         }
@@ -113,7 +113,7 @@ export function AddMovieDialog({ isOpen, onOpenChange, onMovieAdded }: AddMovieD
             episodes: values.episodes,
         };
       } else {
-        if (!values.movieLink || !z.string().url().safeParse(values.movieLink).success) {
+        if (!values.movieLink) {
           form.setError("movieLink", { type: "manual", message: "A valid Movie Link URL is required for this category." });
           return;
         }
@@ -313,5 +313,6 @@ export function AddMovieDialog({ isOpen, onOpenChange, onMovieAdded }: AddMovieD
     </Dialog>
   );
 }
+    
 
     
