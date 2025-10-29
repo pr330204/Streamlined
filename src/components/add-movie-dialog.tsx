@@ -25,7 +25,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Trash2 } from "lucide-react";
-import type { Movie, Episode } from "@/lib/types";
+import type { Movie } from "@/lib/types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea } from "./ui/scroll-area";
@@ -38,10 +38,28 @@ const episodeSchema = z.object({
 
 const formSchema = z.object({
   title: z.string().min(1, "Title is required."),
+  category: z.enum(["movie", "web-series", "podcast", "tv-channel", "other"]),
   url: z.string().optional(),
   thumbnailUrl: z.string().optional(),
-  category: z.enum(["movie", "web-series", "podcast", "tv-channel", "other"]),
   episodes: z.array(episodeSchema).optional(),
+}).superRefine((data, ctx) => {
+    if (data.category === 'web-series') {
+        if (!data.episodes || data.episodes.length === 0 || data.episodes.some(ep => !ep.url)) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                path: ["episodes"],
+                message: "At least one episode with a valid URL is required for a web series.",
+            });
+        }
+    } else {
+        if (!data.url || data.url.trim() === '') {
+             ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                path: ["url"],
+                message: "URL is required for this category.",
+            });
+        }
+    }
 });
 
 type AddMovieFormValues = z.infer<typeof formSchema>;
@@ -76,12 +94,11 @@ export function AddMovieDialog({ isOpen, onOpenChange, onMovieAdded }: AddMovieD
   const category = form.watch("category");
 
   useEffect(() => {
-    // Keep title and category when switching categories
+    // Reset fields when category changes to avoid validation conflicts
     const currentTitle = form.getValues("title");
-    const currentCategory = form.getValues("category");
     form.reset({
       title: currentTitle,
-      category: currentCategory,
+      category: category,
       url: "",
       thumbnailUrl: "",
       episodes: [{ title: "Episode 1", url: "" }],
@@ -102,40 +119,21 @@ export function AddMovieDialog({ isOpen, onOpenChange, onMovieAdded }: AddMovieD
       let moviePayload: Omit<Movie, "id" | "votes" | "createdAt" | "duration">;
 
       if (values.category === 'web-series') {
-        if (!values.episodes || values.episodes.length === 0 || !values.episodes.every(ep => ep.url && ep.url.trim() !== '')) {
-          form.setError("episodes", { type: "manual", message: "At least one episode with a valid URL is required for a web series." });
-          toast({
-            variant: "destructive",
-            title: "Validation Error",
-            description: "At least one episode with a valid URL is required for a web series.",
-          });
-          return;
-        }
         moviePayload = { 
             title: values.title,
+            category: values.category,
             url: '', // Main URL is not needed for web series container
             thumbnailUrl: values.thumbnailUrl || undefined,
-            category: values.category,
             episodes: values.episodes,
         };
       } else {
-        if (!values.url || values.url.trim() === '') {
-          form.setError("url", { type: "manual", message: "A valid URL is required for this category." });
-           toast({
-            variant: "destructive",
-            title: "Validation Error",
-            description: "A valid URL is required for this category.",
-          });
-          return;
-        }
         moviePayload = { 
             title: values.title,
-            url: values.url,
-            thumbnailUrl: values.thumbnailUrl || undefined,
             category: values.category,
+            url: values.url!,
+            thumbnailUrl: values.thumbnailUrl || undefined,
         };
       }
-
       onMovieAdded(moviePayload);
     });
   };
@@ -283,7 +281,7 @@ export function AddMovieDialog({ isOpen, onOpenChange, onMovieAdded }: AddMovieD
                         >
                           Add Episode
                       </Button>
-                      <FormMessage>{form.formState.errors.episodes?.message || form.formState.errors.episodes?.[0]?.url?.message}</FormMessage>
+                      <FormMessage>{form.formState.errors.episodes?.message}</FormMessage>
                   </div>
                 ) : (
                   <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -313,6 +311,5 @@ export function AddMovieDialog({ isOpen, onOpenChange, onMovieAdded }: AddMovieD
     </Dialog>
   );
 }
-    
 
     
