@@ -37,8 +37,8 @@ const episodeSchema = z.object({
 });
 
 const formSchema = z.object({
-  movieTitle: z.string().min(1, "Movie title is required."),
-  movieLink: z.string().optional(),
+  title: z.string().min(1, "Title is required."),
+  url: z.string().optional(),
   thumbnailUrl: z.string().optional(),
   category: z.enum(["movie", "web-series", "podcast", "tv-channel", "other"]),
   episodes: z.array(episodeSchema).optional(),
@@ -60,8 +60,8 @@ export function AddMovieDialog({ isOpen, onOpenChange, onMovieAdded }: AddMovieD
   const form = useForm<AddMovieFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      movieTitle: "",
-      movieLink: "",
+      title: "",
+      url: "",
       thumbnailUrl: "",
       category: "movie",
       episodes: [{ title: "Episode 1", url: "" }],
@@ -76,12 +76,12 @@ export function AddMovieDialog({ isOpen, onOpenChange, onMovieAdded }: AddMovieD
   const category = form.watch("category");
 
   useEffect(() => {
-    const currentTitle = form.getValues("movieTitle");
+    const currentTitle = form.getValues("title");
     const currentCategory = form.getValues("category");
     form.reset({
-      movieTitle: currentTitle,
+      title: currentTitle,
       category: currentCategory,
-      movieLink: "",
+      url: "",
       thumbnailUrl: "",
       episodes: [{ title: "Episode 1", url: "" }],
     });
@@ -106,20 +106,20 @@ export function AddMovieDialog({ isOpen, onOpenChange, onMovieAdded }: AddMovieD
           return;
         }
         moviePayload = { 
-            title: values.movieTitle,
+            title: values.title,
             url: '', // Main URL is not needed for web series container
             thumbnailUrl: values.thumbnailUrl || undefined,
             category: values.category,
             episodes: values.episodes,
         };
       } else {
-        if (!values.movieLink) {
-          form.setError("movieLink", { type: "manual", message: "A valid Movie Link URL is required for this category." });
+        if (!values.url) {
+          form.setError("url", { type: "manual", message: "A valid URL is required for this category." });
           return;
         }
         moviePayload = { 
-            title: values.movieTitle,
-            url: values.movieLink,
+            title: values.title,
+            url: values.url,
             thumbnailUrl: values.thumbnailUrl || undefined,
             category: values.category,
         };
@@ -133,7 +133,7 @@ export function AddMovieDialog({ isOpen, onOpenChange, onMovieAdded }: AddMovieD
      <TabsContent value={activeTab} className="space-y-4 py-4">
        <FormField
           control={form.control}
-          name="movieTitle"
+          name="title"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Title</FormLabel>
@@ -146,7 +146,7 @@ export function AddMovieDialog({ isOpen, onOpenChange, onMovieAdded }: AddMovieD
         />
         <FormField
           control={form.control}
-          name="movieLink"
+          name="url"
           render={({ field }) => (
             <FormItem>
               <FormLabel>URL</FormLabel>
@@ -213,7 +213,7 @@ export function AddMovieDialog({ isOpen, onOpenChange, onMovieAdded }: AddMovieD
                   <div className="space-y-4">
                      <FormField
                         control={form.control}
-                        name="movieTitle"
+                        name="title"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Series Title</FormLabel>
