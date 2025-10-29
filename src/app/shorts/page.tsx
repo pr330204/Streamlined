@@ -79,7 +79,7 @@ export default function ShortsPage() {
         return false;
     });
 
-    const shortVideos = uniqueShorts.filter(movie => movie.duration && movie.duration < 300);
+    const shortVideos = uniqueShorts.filter(movie => (movie.duration && movie.duration < 300) || !movie.duration);
 
     shortVideos.sort((a, b) => {
         const dateA = new Date(a.createdAt as string).getTime();
@@ -143,9 +143,10 @@ export default function ShortsPage() {
                     existingIds.add(videoId);
                     return true;
                 }
+                if (!videoId) return true; // Keep non-youtube videos
                 return false;
             });
-            const shortVideos = uniqueNewShorts.filter(movie => movie.duration && movie.duration < 300);
+            const shortVideos = uniqueNewShorts.filter(movie => (movie.duration && movie.duration < 300) || !movie.duration);
             return [...prevShorts, ...shortVideos];
         });
     }

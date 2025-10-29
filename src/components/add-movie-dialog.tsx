@@ -39,7 +39,7 @@ const episodeSchema = z.object({
 const formSchema = z.object({
   movieTitle: z.string().min(1, "Movie title is required."),
   movieLink: z.string().optional(),
-  thumbnailUrl: z.string().url("Please enter a valid URL for the thumbnail.").optional().or(z.literal('')),
+  thumbnailUrl: z.string().optional(),
   category: z.enum(["movie", "web-series", "podcast", "tv-channel", "other"]),
   episodes: z.array(episodeSchema).optional(),
 });

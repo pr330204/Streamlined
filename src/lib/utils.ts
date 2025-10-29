@@ -121,18 +121,10 @@ export const isLiveStream = (url: string) => url.endsWith('.m3u8');
 
 export function isPlayableOrGoogleDrive(url: string): boolean {
   if (!url) return false;
-  
-  if (isLiveStream(url)) return true;
 
   const isYouTube = !!getYouTubeVideoId(url);
-  
-  let isGoogleDrive = false;
-  try {
-    const urlObj = new URL(url);
-    isGoogleDrive = urlObj.hostname.includes('drive.google.com');
-  } catch (error) {
-    isGoogleDrive = url.includes('drive.google.com');
-  }
+  const isGoogleDrive = /drive\.google\.com/.test(url);
+  const isDirectPlayable = /\.(mp4|m3u8|webm|ogg)$/.test(url);
 
-  return isYouTube || isGoogleDrive;
+  return isYouTube || isGoogleDrive || isDirectPlayable || isLiveStream(url);
 }
