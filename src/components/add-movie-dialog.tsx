@@ -30,6 +30,7 @@ import type { Movie, Episode } from "@/lib/types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea } from "./ui/scroll-area";
+import { Label } from "./ui/label";
 
 const episodeSchema = z.object({
   title: z.string().min(1, "Episode title is required."),
@@ -76,10 +77,12 @@ export function AddMovieDialog({ isOpen, onOpenChange, onMovieAdded }: AddMovieD
   const category = form.watch("category");
 
   useEffect(() => {
-    // Reset fields when category changes
+    // Reset fields when category changes to keep form clean
+    const currentTitle = form.getValues("movieTitle");
+    const currentCategory = form.getValues("category");
     form.reset({
-      movieTitle: form.getValues("movieTitle"),
-      category: form.getValues("category"),
+      movieTitle: currentTitle,
+      category: currentCategory,
       movieLink: "",
       thumbnailUrl: "",
       episodes: [{ title: "Episode 1", url: "" }],
@@ -97,13 +100,13 @@ export function AddMovieDialog({ isOpen, onOpenChange, onMovieAdded }: AddMovieD
 
   const onSubmit = (values: AddMovieFormValues) => {
     startTransition(async () => {
-      if (values.category === 'web-series' && (!values.episodes || values.episodes.length === 0)) {
-        form.setError("episodes", { type: "manual", message: "At least one episode is required for a web series." });
+      if (values.category === 'web-series' && (!values.episodes || values.episodes.length === 0 || !values.episodes[0].url)) {
+        form.setError("episodes", { type: "manual", message: "At least one episode with a valid URL is required for a web series." });
         return;
       }
 
-      if (values.category !== 'web-series' && !values.movieLink) {
-        form.setError("movieLink", { type: "manual", message: "Movie Link is required." });
+      if (values.category !== 'web-series' && (!values.movieLink || !values.movieLink.trim())) {
+        form.setError("movieLink", { type: "manual", message: "Movie Link is required for this category." });
         return;
       }
       
@@ -115,16 +118,23 @@ export function AddMovieDialog({ isOpen, onOpenChange, onMovieAdded }: AddMovieD
           description: "Video added successfully.",
         });
         
-        const moviePayload: Omit<Movie, "id" | "votes" | "createdAt" | "duration"> = { 
-            title: values.movieTitle,
-            url: values.movieLink || '',
-            thumbnailUrl: values.thumbnailUrl || undefined,
-            category: values.category,
-        };
+        let moviePayload: Omit<Movie, "id" | "votes" | "createdAt" | "duration">;
 
         if (values.category === 'web-series') {
-          moviePayload.episodes = values.episodes;
-          delete (moviePayload as any).movieLink;
+            moviePayload = { 
+                title: values.movieTitle,
+                url: '', // Main URL is not needed for web series container
+                thumbnailUrl: values.thumbnailUrl || undefined,
+                category: values.category,
+                episodes: values.episodes,
+            };
+        } else {
+             moviePayload = { 
+                title: values.movieTitle,
+                url: values.movieLink || '',
+                thumbnailUrl: values.thumbnailUrl || undefined,
+                category: values.category,
+            };
         }
 
         onMovieAdded(moviePayload);
@@ -252,32 +262,34 @@ export function AddMovieDialog({ isOpen, onOpenChange, onMovieAdded }: AddMovieD
                         <div className="space-y-4">
                           {fields.map((field, index) => (
                             <div key={field.id} className="flex items-end gap-2 p-2 rounded-md border">
-                                <FormField
-                                  control={form.control}
-                                  name={`episodes.${index}.title`}
-                                  render={({ field }) => (
-                                    <FormItem className="flex-1">
-                                      <FormLabel className="text-xs">Ep {index + 1} Title</FormLabel>
-                                      <FormControl>
-                                        <Input {...field} />
-                                      </FormControl>
-                                      <FormMessage />
-                                    </FormItem>
-                                  )}
-                                />
-                               <FormField
-                                  control={form.control}
-                                  name={`episodes.${index}.url`}
-                                  render={({ field }) => (
-                                    <FormItem className="flex-1">
-                                      <FormLabel className="text-xs">URL</FormLabel>
-                                      <FormControl>
-                                        <Input {...field} />
-                                      </FormControl>
-                                      <FormMessage />
-                                    </FormItem>
-                                  )}
-                                />
+                                <div className="flex-1 space-y-2">
+                                  <FormField
+                                    control={form.control}
+                                    name={`episodes.${index}.title`}
+                                    render={({ field }) => (
+                                      <FormItem>
+                                        <FormLabel className="text-xs">Ep {index + 1} Title</FormLabel>
+                                        <FormControl>
+                                          <Input {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                      </FormItem>
+                                    )}
+                                  />
+                                 <FormField
+                                    control={form.control}
+                                    name={`episodes.${index}.url`}
+                                    render={({ field }) => (
+                                      <FormItem>
+                                        <FormLabel className="text-xs">URL</FormLabel>
+                                        <FormControl>
+                                          <Input {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                      </FormItem>
+                                    )}
+                                  />
+                                </div>
                                 <Button type="button" variant="destructive" size="icon" onClick={() => remove(index)}>
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
@@ -293,7 +305,7 @@ export function AddMovieDialog({ isOpen, onOpenChange, onMovieAdded }: AddMovieD
                         >
                           Add Episode
                       </Button>
-                      <FormMessage>{form.formState.errors.episodes?.message}</FormMessage>
+                      <FormMessage>{form.formState.errors.episodes?.message || form.formState.errors.episodes?.[0]?.url?.message}</FormMessage>
                   </div>
                 ) : (
                   <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -321,3 +333,5 @@ export function AddMovieDialog({ isOpen, onOpenChange, onMovieAdded }: AddMovieD
     </Dialog>
   );
 }
+
+    
