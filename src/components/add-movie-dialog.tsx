@@ -95,9 +95,8 @@ export function AddMovieDialog({ isOpen, onOpenChange, onMovieAdded }: AddMovieD
 
   useEffect(() => {
     // Reset fields when category changes to avoid validation conflicts
-    const currentTitle = form.getValues("title");
     form.reset({
-      title: currentTitle,
+      title: form.getValues("title"),
       category: category,
       url: "",
       thumbnailUrl: "",
@@ -158,7 +157,7 @@ export function AddMovieDialog({ isOpen, onOpenChange, onMovieAdded }: AddMovieD
           name="thumbnailUrl"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Thumbnail URL (Optional for YouTube)</FormLabel>
+              <FormLabel>Thumbnail URL (Optional)</FormLabel>
               <FormControl>
                 <Input placeholder="https://example.com/image.png" {...field} />
               </FormControl>
@@ -225,7 +224,7 @@ export function AddMovieDialog({ isOpen, onOpenChange, onMovieAdded }: AddMovieD
                         name="thumbnailUrl"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Series Thumbnail URL</FormLabel>
+                            <FormLabel>Series Thumbnail URL (Optional)</FormLabel>
                             <FormControl>
                               <Input placeholder="https://example.com/series-poster.png" {...field} />
                             </FormControl>
@@ -266,9 +265,9 @@ export function AddMovieDialog({ isOpen, onOpenChange, onMovieAdded }: AddMovieD
                                     )}
                                   />
                                 </div>
-                                <Button type="button" variant="destructive" size="icon" onClick={() => remove(index)}>
+                                {fields.length > 1 && <Button type="button" variant="destructive" size="icon" onClick={() => remove(index)}>
                                   <Trash2 className="h-4 w-4" />
-                                </Button>
+                                </Button>}
                             </div>
                           ))}
                         </div>
@@ -311,5 +310,3 @@ export function AddMovieDialog({ isOpen, onOpenChange, onMovieAdded }: AddMovieD
     </Dialog>
   );
 }
-
-    
