@@ -42,8 +42,13 @@ export default function AdminPage() {
 
   const handleAddMovie = async (movie: Omit<Movie, "id" | "votes" | "createdAt" | "duration">) => {
     try {
+      // Construct the final object to be saved to Firestore
       const movieData = {
-        ...movie,
+        title: movie.title,
+        category: movie.category,
+        url: movie.url || "",
+        thumbnailUrl: movie.thumbnailUrl || "",
+        episodes: movie.episodes || [],
         votes: 0,
         createdAt: serverTimestamp(),
       };
