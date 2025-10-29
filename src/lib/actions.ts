@@ -31,11 +31,17 @@ export async function suggestMovieAction(values: SuggestMovieInput) {
   }
 }
 
+const episodeSchema = z.object({
+  title: z.string().min(1, "Episode title is required."),
+  url: z.string().url("Please enter a valid URL."),
+});
+
 const addMovieSchema = z.object({
     movieTitle: z.string().min(1, "Movie title is required."),
-    movieLink: z.string().url("Please enter a valid URL."),
+    movieLink: z.string().url("Please enter a valid URL.").optional(),
     thumbnailUrl: z.string().url("Please enter a valid URL for the thumbnail.").optional().or(z.literal('')),
     category: z.enum(["movie", "web-series", "podcast", "tv-channel", "other"]),
+    episodes: z.array(episodeSchema).optional(),
 });
 
 // This is a simplified action that bypasses the AI validation.
