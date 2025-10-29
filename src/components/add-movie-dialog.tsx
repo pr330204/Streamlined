@@ -76,6 +76,7 @@ export function AddMovieDialog({ isOpen, onOpenChange, onMovieAdded }: AddMovieD
   const category = form.watch("category");
 
   useEffect(() => {
+    // Keep title and category when switching categories
     const currentTitle = form.getValues("title");
     const currentCategory = form.getValues("category");
     form.reset({
@@ -101,8 +102,13 @@ export function AddMovieDialog({ isOpen, onOpenChange, onMovieAdded }: AddMovieD
       let moviePayload: Omit<Movie, "id" | "votes" | "createdAt" | "duration">;
 
       if (values.category === 'web-series') {
-        if (!values.episodes || values.episodes.length === 0 || !values.episodes.every(ep => ep.url)) {
+        if (!values.episodes || values.episodes.length === 0 || !values.episodes.every(ep => ep.url && ep.url.trim() !== '')) {
           form.setError("episodes", { type: "manual", message: "At least one episode with a valid URL is required for a web series." });
+          toast({
+            variant: "destructive",
+            title: "Validation Error",
+            description: "At least one episode with a valid URL is required for a web series.",
+          });
           return;
         }
         moviePayload = { 
@@ -113,8 +119,13 @@ export function AddMovieDialog({ isOpen, onOpenChange, onMovieAdded }: AddMovieD
             episodes: values.episodes,
         };
       } else {
-        if (!values.url) {
+        if (!values.url || values.url.trim() === '') {
           form.setError("url", { type: "manual", message: "A valid URL is required for this category." });
+           toast({
+            variant: "destructive",
+            title: "Validation Error",
+            description: "A valid URL is required for this category.",
+          });
           return;
         }
         moviePayload = { 
@@ -130,20 +141,7 @@ export function AddMovieDialog({ isOpen, onOpenChange, onMovieAdded }: AddMovieD
   };
 
   const renderSingleUrlContent = () => (
-     <TabsContent value={activeTab} className="space-y-4 py-4">
-       <FormField
-          control={form.control}
-          name="title"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Title</FormLabel>
-              <FormControl>
-                <Input placeholder="e.g., The Social Network" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+     <div className="space-y-4 py-4">
         <FormField
           control={form.control}
           name="url"
@@ -170,7 +168,7 @@ export function AddMovieDialog({ isOpen, onOpenChange, onMovieAdded }: AddMovieD
             </FormItem>
           )}
         />
-    </TabsContent>
+    </div>
   );
 
   return (
@@ -208,22 +206,22 @@ export function AddMovieDialog({ isOpen, onOpenChange, onMovieAdded }: AddMovieD
                     </FormItem>
                   )}
                 />
+                 <FormField
+                    control={form.control}
+                    name="title"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{category === 'web-series' ? 'Series Title' : 'Title'}</FormLabel>
+                        <FormControl>
+                          <Input placeholder="e.g., The Social Network" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
                 {category === 'web-series' ? (
                   <div className="space-y-4">
-                     <FormField
-                        control={form.control}
-                        name="title"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Series Title</FormLabel>
-                            <FormControl>
-                              <Input placeholder="e.g., Breaking Bad" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
                       <FormField
                         control={form.control}
                         name="thumbnailUrl"
@@ -294,7 +292,9 @@ export function AddMovieDialog({ isOpen, onOpenChange, onMovieAdded }: AddMovieD
                       <TabsTrigger value="google-drive">Google Drive</TabsTrigger>
                       <TabsTrigger value="live-stream">Live Stream</TabsTrigger>
                     </TabsList>
-                    {renderSingleUrlContent()}
+                    <TabsContent value="youtube">{renderSingleUrlContent()}</TabsContent>
+                    <TabsContent value="google-drive">{renderSingleUrlContent()}</TabsContent>
+                    <TabsContent value="live-stream">{renderSingleUrlContent()}</TabsContent>
                   </Tabs>
                 )}
                 
