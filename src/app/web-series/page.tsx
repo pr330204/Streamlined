@@ -20,7 +20,6 @@ export default function WebSeriesPage({ searchQuery }: WebSeriesPageProps) {
   useEffect(() => {
     const q = query(
       collection(db, "movies"),
-      where("category", "==", "web-series"),
       orderBy("createdAt", "desc")
     );
 
@@ -32,7 +31,7 @@ export default function WebSeriesPage({ searchQuery }: WebSeriesPageProps) {
           ...data,
           createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate().toISOString() : data.createdAt
         } as Movie
-      });
+      }).filter(movie => movie.category === 'web-series');
       
       const youtubeMovies = moviesFromDb.filter(movie => getYouTubeVideoId(movie.url));
       const otherMovies = moviesFromDb.filter(movie => !getYouTubeVideoId(movie.url));

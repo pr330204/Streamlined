@@ -20,7 +20,6 @@ export default function PodcastsPage({ searchQuery }: PodcastsPageProps) {
   useEffect(() => {
     const q = query(
       collection(db, "movies"),
-      where("category", "==", "podcast"),
       orderBy("createdAt", "desc")
     );
 
@@ -32,7 +31,7 @@ export default function PodcastsPage({ searchQuery }: PodcastsPageProps) {
           ...data,
           createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate().toISOString() : data.createdAt
         } as Movie
-      });
+      }).filter(movie => movie.category === 'podcast');
       
       const youtubeMovies = moviesFromDb.filter(movie => getYouTubeVideoId(movie.url));
       const otherMovies = moviesFromDb.filter(movie => !getYouTubeVideoId(movie.url));
