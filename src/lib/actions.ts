@@ -31,28 +31,11 @@ export async function suggestMovieAction(values: SuggestMovieInput) {
   }
 }
 
-const episodeSchema = z.object({
-  title: z.string().min(1, "Episode title is required."),
-  url: z.string().url("Please enter a valid URL."),
-});
-
-const addMovieSchema = z.object({
-    movieTitle: z.string().min(1, "Movie title is required."),
-    movieLink: z.string().url("Please enter a valid URL.").optional(),
-    thumbnailUrl: z.string().url("Please enter a valid URL for the thumbnail.").optional().or(z.literal('')),
-    category: z.enum(["movie", "web-series", "podcast", "tv-channel", "other"]),
-    episodes: z.array(episodeSchema).optional(),
-});
-
-// This is a simplified action that bypasses the AI validation.
-export async function checkMovieLinkAction(values: z.infer<typeof addMovieSchema>) {
-    const validated = addMovieSchema.safeParse(values);
-    if (!validated.success) {
-        return {
-            success: false,
-            message: validated.error.errors[0].message,
-        };
-    }
+// This is a simplified action that bypasses any AI validation.
+// The form dialog now handles its own validation logic.
+export async function checkMovieLinkAction(values: any) {
+    // We can add more robust server-side validation here if needed in the future.
+    // For now, we trust the client-side validation and just pass it through.
     
     // Bypassing the AI check and assuming the link is valid if it passes schema validation.
     return {

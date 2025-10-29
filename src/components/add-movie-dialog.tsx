@@ -100,7 +100,7 @@ export function AddMovieDialog({ isOpen, onOpenChange, onMovieAdded }: AddMovieD
 
   const onSubmit = (values: AddMovieFormValues) => {
     startTransition(async () => {
-      if (values.category === 'web-series' && (!values.episodes || values.episodes.length === 0 || !values.episodes[0].url)) {
+      if (values.category === 'web-series' && (!values.episodes || values.episodes.length === 0 || !values.episodes.every(ep => ep.url))) {
         form.setError("episodes", { type: "manual", message: "At least one episode with a valid URL is required for a web series." });
         return;
       }
@@ -333,5 +333,3 @@ export function AddMovieDialog({ isOpen, onOpenChange, onMovieAdded }: AddMovieD
     </Dialog>
   );
 }
-
-    
