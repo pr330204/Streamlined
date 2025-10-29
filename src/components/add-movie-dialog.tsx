@@ -34,7 +34,7 @@ const formSchema = z.object({
   movieTitle: z.string().min(1, "Movie title is required."),
   movieLink: z.string().url("Please enter a valid URL."),
   thumbnailUrl: z.string().url("Please enter a valid URL for the thumbnail.").optional().or(z.literal('')),
-  category: z.enum(["movie", "web-series", "podcast", "other"]),
+  category: z.enum(["movie", "web-series", "podcast", "tv-channel", "other"]),
 });
 
 type AddMovieFormValues = z.infer<typeof formSchema>;
@@ -131,6 +131,7 @@ export function AddMovieDialog({ isOpen, onOpenChange, onMovieAdded }: AddMovieD
                           <SelectItem value="movie">Movie</SelectItem>
                           <SelectItem value="web-series">Web Series</SelectItem>
                           <SelectItem value="podcast">Podcast</SelectItem>
+                          <SelectItem value="tv-channel">TV Channel</SelectItem>
                           <SelectItem value="other">Other</SelectItem>
                         </SelectContent>
                       </Select>

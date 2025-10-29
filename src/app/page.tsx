@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import MoviesPage from "./movies/page";
 import WebSeriesPage from "./web-series/page";
 import PodcastsPage from "./podcasts/page";
+import TvChannelsPage from "./tv-channels/page";
 import AdMobBanner from "@/components/admob-banner";
 
 export default function Home() {
@@ -19,10 +20,11 @@ export default function Home() {
         <Tabs defaultValue="movies" className="w-full">
           <div className="sticky top-16 z-30 bg-background/95 backdrop-blur-sm">
             <div className="container max-w-7xl mx-auto px-4">
-              <TabsList className="grid w-full grid-cols-3 h-12">
+              <TabsList className="grid w-full grid-cols-4 h-12">
                 <TabsTrigger value="movies" className="text-base">Movies</TabsTrigger>
                 <TabsTrigger value="web-series" className="text-base">Web Series</TabsTrigger>
                 <TabsTrigger value="podcasts" className="text-base">Podcasts</TabsTrigger>
+                <TabsTrigger value="tv-channels" className="text-base">TV Channels</TabsTrigger>
               </TabsList>
             </div>
           </div>
@@ -35,6 +37,9 @@ export default function Home() {
             </TabsContent>
             <TabsContent value="podcasts">
               <PodcastsPage searchQuery={searchQuery} />
+            </TabsContent>
+             <TabsContent value="tv-channels">
+              <TvChannelsPage searchQuery={searchQuery} />
             </TabsContent>
           </div>
         </Tabs>

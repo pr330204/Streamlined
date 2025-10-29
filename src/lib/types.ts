@@ -1,7 +1,7 @@
 
 import type { Timestamp } from "firebase/firestore";
 
-export type MovieCategory = 'movie' | 'web-series' | 'podcast' | 'other';
+export type MovieCategory = 'movie' | 'web-series' | 'podcast' | 'tv-channel' | 'other';
 
 export interface Movie {
   id: string;
