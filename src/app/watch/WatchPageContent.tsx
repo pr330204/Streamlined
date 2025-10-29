@@ -104,26 +104,36 @@ export default function WatchPageContent() {
     if (!movie || allMovies.length === 0) {
       return [];
     }
-
-    const currentTitle = movie.title.toLowerCase().replace(/[\d\s-:]+$/, '');
+  
     const otherMovies = allMovies.filter(m => m.id !== movie.id);
-
-    const similarByTitle = otherMovies.filter(m => 
-        m.title.toLowerCase().includes(currentTitle)
-    );
+  
+    // Logic to find movies from the same series
+    const currentTitleLower = movie.title.toLowerCase();
+    const baseTitleMatch = currentTitleLower.match(/^([a-zA-Z\s]+)/);
+    const baseTitle = baseTitleMatch ? baseTitleMatch[1].trim() : currentTitleLower;
     
-    const popular = otherMovies.sort((a,b) => b.votes - a.votes);
-
+    let similarByTitle: Movie[] = [];
+    if (baseTitle.length > 3) { // Avoid matching short common words
+      similarByTitle = otherMovies.filter(m =>
+        m.title.toLowerCase().startsWith(baseTitle)
+      );
+    }
+  
+    // Fallback to popular movies
+    const popular = otherMovies.sort((a, b) => b.votes - a.votes);
+  
+    // Combine lists, ensuring no duplicates
     const recommendations = [...similarByTitle];
-    
-    popular.forEach(p => {
-        if(!recommendations.some(r => r.id === p.id)) {
-            recommendations.push(p);
-        }
-    });
-
+    const recommendationIds = new Set(recommendations.map(r => r.id));
+  
+    for (const p of popular) {
+      if (!recommendationIds.has(p.id)) {
+        recommendations.push(p);
+        recommendationIds.add(p.id);
+      }
+    }
+  
     return recommendations.slice(0, 10);
-
   }, [movie, allMovies]);
   
   const currentVideoUrl = useMemo(() => {
