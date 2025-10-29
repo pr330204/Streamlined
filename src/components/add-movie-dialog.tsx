@@ -98,39 +98,34 @@ export function AddMovieDialog({ isOpen, onOpenChange, onMovieAdded }: AddMovieD
 
   const onSubmit = (values: AddMovieFormValues) => {
     startTransition(() => {
-      if (values.category === 'web-series') {
-        if (!values.episodes || values.episodes.length === 0 || !values.episodes.every(ep => ep.url)) {
-          form.setError("episodes", { type: "manual", message: "At least one episode with a valid URL is required for a web series." });
-          return;
-        }
-      } else {
-        if (!values.movieLink || !values.movieLink.trim() || !z.string().url().safeParse(values.movieLink).success) {
-          form.setError("movieLink", { type: "manual", message: "A valid Movie Link URL is required for this category." });
-          return;
-        }
-      }
-      
       let moviePayload: Omit<Movie, "id" | "votes" | "createdAt" | "duration">;
 
       if (values.category === 'web-series') {
-          moviePayload = { 
-              title: values.movieTitle,
-              url: '', // Main URL is not needed for web series container
-              thumbnailUrl: values.thumbnailUrl || undefined,
-              category: values.category,
-              episodes: values.episodes,
-          };
+        if (!values.episodes || values.episodes.length === 0 || !values.episodes.every(ep => ep.url && z.string().url().safeParse(ep.url).success)) {
+          form.setError("episodes", { type: "manual", message: "At least one episode with a valid URL is required for a web series." });
+          return;
+        }
+        moviePayload = { 
+            title: values.movieTitle,
+            url: '', // Main URL is not needed for web series container
+            thumbnailUrl: values.thumbnailUrl || undefined,
+            category: values.category,
+            episodes: values.episodes,
+        };
       } else {
-           moviePayload = { 
-              title: values.movieTitle,
-              url: values.movieLink || '',
-              thumbnailUrl: values.thumbnailUrl || undefined,
-              category: values.category,
-          };
+        if (!values.movieLink || !z.string().url().safeParse(values.movieLink).success) {
+          form.setError("movieLink", { type: "manual", message: "A valid Movie Link URL is required for this category." });
+          return;
+        }
+        moviePayload = { 
+            title: values.movieTitle,
+            url: values.movieLink,
+            thumbnailUrl: values.thumbnailUrl || undefined,
+            category: values.category,
+        };
       }
 
       onMovieAdded(moviePayload);
-      // No need to call handleDialogClose here, it's handled in the parent on success
     });
   };
 
@@ -318,3 +313,5 @@ export function AddMovieDialog({ isOpen, onOpenChange, onMovieAdded }: AddMovieD
     </Dialog>
   );
 }
+
+    
