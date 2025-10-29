@@ -23,7 +23,7 @@ export default function WatchPageContent() {
   const searchParams = useSearchParams();
   const docId = searchParams.get('v');
   const [movie, setMovie] = useState<Movie | null>(null);
-  const [suggestedMovies, setSuggestedMovies] = useState<Movie[]>([]);
+  const [allMovies, setAllMovies] = useState<Movie[]>([]);
   const [loading, setLoading] = useState(true);
   const [isClient, setIsClient] = useState(false);
   const [showPlayer, setShowPlayer] = useState(false);
@@ -56,10 +56,8 @@ export default function WatchPageContent() {
               createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate().toISOString() : data.createdAt
             } as Movie;
             
-            // Fetch YT data for the main movie thumbnail
             const [movieWithYTData] = await fetchYouTubeDataForMovies([movieData]);
 
-            // If it's a web series, fetch data for each episode
             if (movieWithYTData.episodes && movieWithYTData.episodes.length > 0) {
               const episodeMovies: Movie[] = movieWithYTData.episodes.map((ep, index) => ({
                 id: `${docSnap.id}-ep-${index}`,
@@ -85,7 +83,7 @@ export default function WatchPageContent() {
   }, [docId]);
 
   useEffect(() => {
-    const q = query(collection(db, "movies"), orderBy("votes", "desc"), limit(20));
+    const q = query(collection(db, "movies"), orderBy("createdAt", "desc"));
     const unsub = onSnapshot(q, async (snapshot) => {
       const moviesData = snapshot.docs.map(doc => {
         const data = doc.data();
@@ -96,14 +94,37 @@ export default function WatchPageContent() {
         } as Movie;
       });
       const moviesWithYTData = await fetchYouTubeDataForMovies(moviesData);
-      
-      const longVideos = moviesWithYTData.filter(m => !m.duration || m.duration >= 300);
-
-      setSuggestedMovies(longVideos.slice(0, 10));
+      setAllMovies(moviesWithYTData);
     });
 
     return () => unsub();
   }, []);
+
+  const suggestedMovies = useMemo(() => {
+    if (!movie || allMovies.length === 0) {
+      return [];
+    }
+
+    const currentTitle = movie.title.toLowerCase().replace(/[\d\s-:]+$/, '');
+    const otherMovies = allMovies.filter(m => m.id !== movie.id);
+
+    const similarByTitle = otherMovies.filter(m => 
+        m.title.toLowerCase().includes(currentTitle)
+    );
+    
+    const popular = otherMovies.sort((a,b) => b.votes - a.votes);
+
+    const recommendations = [...similarByTitle];
+    
+    popular.forEach(p => {
+        if(!recommendations.some(r => r.id === p.id)) {
+            recommendations.push(p);
+        }
+    });
+
+    return recommendations.slice(0, 10);
+
+  }, [movie, allMovies]);
   
   const currentVideoUrl = useMemo(() => {
     if (!movie) return null;
@@ -241,8 +262,6 @@ export default function WatchPageContent() {
        </div>
     );
   }
-
-  const otherMovies = suggestedMovies.filter(m => m.id !== movie.id);
 
   const metadata = [
     { label: "Season", value: "S1E1" },
@@ -386,7 +405,7 @@ export default function WatchPageContent() {
 
           <div>
             <h2 className="text-lg font-semibold mb-4">Recommended For You</h2>
-            <MovieList movies={otherMovies} variant="grid-condensed" />
+            <MovieList movies={suggestedMovies} variant="grid-condensed" />
           </div>
         </div>
 
