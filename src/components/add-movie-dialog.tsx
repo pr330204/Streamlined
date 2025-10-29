@@ -1,8 +1,8 @@
 
 "use client";
 
-import { useState, useTransition, useEffect } from "react";
-import { useForm, useFieldArray } from "react-hook-form";
+import { useState, useTransition } from "react";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import {
@@ -23,43 +23,16 @@ import {
 } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useToast } from "@/hooks/use-toast";
-import { Loader2, Trash2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import type { Movie } from "@/lib/types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ScrollArea } from "./ui/scroll-area";
-import { Label } from "./ui/label";
-
-const episodeSchema = z.object({
-  title: z.string().min(1, "Episode title is required."),
-  url: z.string().min(1, "Please enter a valid URL."),
-});
 
 const formSchema = z.object({
   title: z.string().min(1, "Title is required."),
-  category: z.enum(["movie", "web-series", "podcast", "tv-channel", "other"]),
-  url: z.string().optional(),
+  category: z.enum(["movie", "podcast", "tv-channel", "other", "web-series"]),
+  url: z.string().min(1, "URL is required."),
   thumbnailUrl: z.string().optional(),
-  episodes: z.array(episodeSchema).optional(),
-}).superRefine((data, ctx) => {
-    if (data.category === 'web-series') {
-        if (!data.episodes || data.episodes.length === 0 || data.episodes.some(ep => !ep.url)) {
-            ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                path: ["episodes"],
-                message: "At least one episode with a valid URL is required for a web series.",
-            });
-        }
-    } else {
-        if (!data.url || data.url.trim() === '') {
-             ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                path: ["url"],
-                message: "URL is required for this category.",
-            });
-        }
-    }
 });
 
 type AddMovieFormValues = z.infer<typeof formSchema>;
@@ -73,7 +46,6 @@ interface AddMovieDialogProps {
 export function AddMovieDialog({ isOpen, onOpenChange, onMovieAdded }: AddMovieDialogProps) {
   const [isPending, startTransition] = useTransition();
   const [activeTab, setActiveTab] = useState("youtube");
-  const { toast } = useToast();
 
   const form = useForm<AddMovieFormValues>({
     resolver: zodResolver(formSchema),
@@ -82,28 +54,8 @@ export function AddMovieDialog({ isOpen, onOpenChange, onMovieAdded }: AddMovieD
       url: "",
       thumbnailUrl: "",
       category: "movie",
-      episodes: [{ title: "Episode 1", url: "" }],
     },
   });
-
-  const { fields, append, remove } = useFieldArray({
-    control: form.control,
-    name: "episodes",
-  });
-
-  const category = form.watch("category");
-
-  useEffect(() => {
-    // Reset fields when category changes to avoid validation conflicts
-    form.reset({
-      title: form.getValues("title"),
-      category: category,
-      url: "",
-      thumbnailUrl: "",
-      episodes: [{ title: "Episode 1", url: "" }],
-    });
-  }, [category, form]);
-
 
   const handleDialogClose = (open: boolean) => {
     if (!open) {
@@ -115,25 +67,12 @@ export function AddMovieDialog({ isOpen, onOpenChange, onMovieAdded }: AddMovieD
 
   const onSubmit = (values: AddMovieFormValues) => {
     startTransition(() => {
-      let moviePayload: Omit<Movie, "id" | "votes" | "createdAt" | "duration">;
-
-      if (values.category === 'web-series') {
-        moviePayload = { 
-            title: values.title,
-            category: values.category,
-            url: '', // Main URL is not needed for web series container
-            thumbnailUrl: values.thumbnailUrl || undefined,
-            episodes: values.episodes,
-        };
-      } else {
-        moviePayload = { 
-            title: values.title,
-            category: values.category,
-            url: values.url!,
-            thumbnailUrl: values.thumbnailUrl || undefined,
-        };
-      }
-      onMovieAdded(moviePayload);
+      onMovieAdded({
+        title: values.title,
+        category: values.category,
+        url: values.url,
+        thumbnailUrl: values.thumbnailUrl || undefined,
+      });
     });
   };
 
@@ -193,7 +132,6 @@ export function AddMovieDialog({ isOpen, onOpenChange, onMovieAdded }: AddMovieD
                         </FormControl>
                         <SelectContent>
                           <SelectItem value="movie">Movie</SelectItem>
-                          <SelectItem value="web-series">Web Series</SelectItem>
                           <SelectItem value="podcast">Podcast</SelectItem>
                           <SelectItem value="tv-channel">TV Channel</SelectItem>
                           <SelectItem value="other">Other</SelectItem>
@@ -208,7 +146,7 @@ export function AddMovieDialog({ isOpen, onOpenChange, onMovieAdded }: AddMovieD
                     name="title"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{category === 'web-series' ? 'Series Title' : 'Title'}</FormLabel>
+                        <FormLabel>Title</FormLabel>
                         <FormControl>
                           <Input placeholder="e.g., The Social Network" {...field} />
                         </FormControl>
@@ -217,72 +155,6 @@ export function AddMovieDialog({ isOpen, onOpenChange, onMovieAdded }: AddMovieD
                     )}
                   />
 
-                {category === 'web-series' ? (
-                  <div className="space-y-4">
-                      <FormField
-                        control={form.control}
-                        name="thumbnailUrl"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Series Thumbnail URL (Optional)</FormLabel>
-                            <FormControl>
-                              <Input placeholder="https://example.com/series-poster.png" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <Label>Episodes</Label>
-                      <ScrollArea className="h-48 w-full rounded-md border p-4">
-                        <div className="space-y-4">
-                          {fields.map((field, index) => (
-                            <div key={field.id} className="flex items-end gap-2 p-2 rounded-md border">
-                                <div className="flex-1 space-y-2">
-                                  <FormField
-                                    control={form.control}
-                                    name={`episodes.${index}.title`}
-                                    render={({ field }) => (
-                                      <FormItem>
-                                        <FormLabel className="text-xs">Ep {index + 1} Title</FormLabel>
-                                        <FormControl>
-                                          <Input {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                      </FormItem>
-                                    )}
-                                  />
-                                 <FormField
-                                    control={form.control}
-                                    name={`episodes.${index}.url`}
-                                    render={({ field }) => (
-                                      <FormItem>
-                                        <FormLabel className="text-xs">URL</FormLabel>
-                                        <FormControl>
-                                          <Input {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                      </FormItem>
-                                    )}
-                                  />
-                                </div>
-                                {fields.length > 1 && <Button type="button" variant="destructive" size="icon" onClick={() => remove(index)}>
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>}
-                            </div>
-                          ))}
-                        </div>
-                      </ScrollArea>
-                      <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => append({ title: `Episode ${fields.length + 1}`, url: "" })}
-                        >
-                          Add Episode
-                      </Button>
-                      <FormMessage>{form.formState.errors.episodes?.message}</FormMessage>
-                  </div>
-                ) : (
                   <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                     <TabsList className="grid w-full grid-cols-3">
                       <TabsTrigger value="youtube">YouTube</TabsTrigger>
@@ -293,7 +165,6 @@ export function AddMovieDialog({ isOpen, onOpenChange, onMovieAdded }: AddMovieD
                     <TabsContent value="google-drive">{renderSingleUrlContent()}</TabsContent>
                     <TabsContent value="live-stream">{renderSingleUrlContent()}</TabsContent>
                   </Tabs>
-                )}
                 
                 <DialogFooter>
                   <Button type="button" variant="ghost" onClick={() => handleDialogClose(false)}>

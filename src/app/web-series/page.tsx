@@ -4,7 +4,7 @@
 import type { Movie } from "@/lib/types";
 import { useState, useEffect, useMemo } from "react";
 import { db } from "@/lib/firebase";
-import { collection, onSnapshot, query, where, orderBy, Timestamp } from "firebase/firestore";
+import { collection, onSnapshot, query, orderBy, Timestamp } from "firebase/firestore";
 import { MovieList } from "@/components/movie-list";
 import { fetchYouTubeDataForMovies } from "@/lib/youtube";
 import { getYouTubeVideoId } from "@/lib/utils";

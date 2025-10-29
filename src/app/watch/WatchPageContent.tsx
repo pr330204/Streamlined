@@ -5,10 +5,10 @@ import { useEffect, useState, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { doc, getDoc, collection, onSnapshot, query, orderBy, limit, Timestamp, updateDoc, increment } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { Movie, Episode } from '@/lib/types';
+import type { Movie } from '@/lib/types';
 import { Header } from '@/components/header';
 import { Button } from '@/components/ui/button';
-import { Heart, Download, ListPlus, Share2, PlayCircle, ChevronRight } from 'lucide-react';
+import { Heart, Download, ListPlus, Share2, PlayCircle } from 'lucide-react';
 import { MovieList } from '@/components/movie-list';
 import { getYouTubeEmbedUrl, getGoogleDriveEmbedUrl, isLiveStream, formatNumber, getYouTubeVideoId } from '@/lib/utils';
 import Image from 'next/image';
@@ -28,7 +28,6 @@ export default function WatchPageContent() {
   const [isClient, setIsClient] = useState(false);
   const [showPlayer, setShowPlayer] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
-  const [currentEpisodeIndex, setCurrentEpisodeIndex] = useState(0);
   const { toast } = useToast();
 
 
@@ -44,7 +43,6 @@ export default function WatchPageContent() {
 
     setLoading(true);
     setShowPlayer(false);
-    setCurrentEpisodeIndex(0);
     const docRef = doc(db, 'movies', docId);
 
     const unsub = onSnapshot(docRef, async (docSnap) => {
@@ -57,18 +55,6 @@ export default function WatchPageContent() {
             } as Movie;
             
             const [movieWithYTData] = await fetchYouTubeDataForMovies([movieData]);
-
-            if (movieWithYTData.episodes && movieWithYTData.episodes.length > 0) {
-              const episodeMovies: Movie[] = movieWithYTData.episodes.map((ep, index) => ({
-                id: `${docSnap.id}-ep-${index}`,
-                title: ep.title,
-                url: ep.url,
-                votes: 0,
-                createdAt: movieWithYTData.createdAt
-              }));
-              const episodesWithYTData = await fetchYouTubeDataForMovies(episodeMovies);
-              movieWithYTData.episodes = episodesWithYTData.map(epData => ({ title: epData.title, url: epData.url }));
-            }
 
             setMovie(movieWithYTData);
         } else {
@@ -136,13 +122,7 @@ export default function WatchPageContent() {
     return recommendations.slice(0, 10);
   }, [movie, allMovies]);
   
-  const currentVideoUrl = useMemo(() => {
-    if (!movie) return null;
-    if (movie.episodes && movie.episodes.length > 0) {
-      return movie.episodes[currentEpisodeIndex]?.url || null;
-    }
-    return movie.url;
-  }, [movie, currentEpisodeIndex]);
+  const currentVideoUrl = movie?.url;
 
   const embedUrl = useMemo(() => {
     if (!currentVideoUrl) return null;
@@ -280,7 +260,7 @@ export default function WatchPageContent() {
     { label: "Industry", value: "Netflix" },
   ];
 
-  const mainThumbnail = movie.thumbnailUrl || (movie.episodes && movie.episodes.length > 0 ? `https://i3.ytimg.com/vi/${getYouTubeVideoId(movie.episodes[0].url)}/hqdefault.jpg` : 'https://placehold.co/1280x720.png');
+  const mainThumbnail = movie.thumbnailUrl || (movie.url ? `https://i3.ytimg.com/vi/${getYouTubeVideoId(movie.url)}/hqdefault.jpg` : 'https://placehold.co/1280x720.png');
 
   return (
     <div className="flex min-h-screen w-full flex-col bg-background text-foreground">
@@ -361,7 +341,7 @@ export default function WatchPageContent() {
 
           <Button size="lg" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-lg" onClick={handleWatchNow}>
             <PlayCircle className="mr-2 h-6 w-6" />
-            {showPlayer ? 'Close Player' : (movie.episodes && movie.episodes.length > 0 ? `Play Episode ${currentEpisodeIndex + 1}` : 'Watch Now')}
+            {showPlayer ? 'Close Player' : 'Watch Now'}
           </Button>
 
           <div className="py-2">
@@ -386,32 +366,6 @@ export default function WatchPageContent() {
               <span className="text-xs font-semibold">Share</span>
             </button>
           </div>
-
-          {movie.episodes && movie.episodes.length > 0 && (
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <h2 className="text-lg font-semibold">Episodes ({currentEpisodeIndex + 1}/{movie.episodes.length})</h2>
-                <Button variant="ghost" size="sm">See all <ChevronRight className="h-4 w-4 ml-1" /></Button>
-              </div>
-              <div className="flex gap-2 overflow-x-auto pb-2">
-                {movie.episodes.map((ep, index) => (
-                  <button 
-                    key={index}
-                    onClick={() => setCurrentEpisodeIndex(index)}
-                    className={cn(
-                      "h-12 w-12 flex-shrink-0 rounded-md flex items-center justify-center font-bold text-lg border-2",
-                      currentEpisodeIndex === index 
-                        ? "bg-primary border-primary text-primary-foreground" 
-                        : "bg-card border-border hover:bg-muted"
-                    )}
-                  >
-                    {index + 1}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
 
           <div>
             <h2 className="text-lg font-semibold mb-4">Recommended For You</h2>

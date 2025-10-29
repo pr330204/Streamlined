@@ -3,16 +3,10 @@ import type { Timestamp } from "firebase/firestore";
 
 export type MovieCategory = 'movie' | 'web-series' | 'podcast' | 'tv-channel' | 'other';
 
-export interface Episode {
-  title: string;
-  url: string;
-}
-
 export interface Movie {
   id: string;
   title: string;
-  url: string; // For single movies/videos
-  episodes?: Episode[]; // For web-series
+  url: string;
   votes: number;
   createdAt: Timestamp | string;
   thumbnailUrl?: string;
