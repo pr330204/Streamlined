@@ -41,16 +41,11 @@ export default function AdminPage() {
   };
 
   const handleAddMovie = async (movie: Omit<Movie, "id" | "votes" | "createdAt" | "duration">) => {
-    const movieData: any = {
+    const movieData = {
       ...movie,
       votes: 0,
       createdAt: serverTimestamp(),
-      category: movie.category || 'other',
     };
-
-    if (!movieData.thumbnailUrl) {
-      delete movieData.thumbnailUrl;
-    }
     
     await addDoc(collection(db, "movies"), movieData);
   };
