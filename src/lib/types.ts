@@ -29,6 +29,7 @@ export interface User {
     id: string;
     name: string;
     coins: number;
+    fcmToken?: string;
 }
 
 export interface ChatMessage {

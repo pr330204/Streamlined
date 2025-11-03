@@ -7,6 +7,7 @@ import { db } from '@/lib/firebase';
 import { doc, setDoc, getDoc, updateDoc, increment, collection, query, where, getDocs, deleteDoc } from 'firebase/firestore';
 import { v4 as uuidv4 } from 'uuid';
 import type { User } from '@/lib/types';
+import { initializeFCM } from '@/lib/firebase-messaging';
 
 interface UserContextType {
   user: User | null;
@@ -39,7 +40,9 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
     if (userSnap.exists()) {
       const userData = userSnap.data() as Omit<User, 'id'>;
-      setUserState({ id: userId, ...userData });
+      const userWithId = { id: userId, ...userData };
+      setUserState(userWithId);
+      initializeFCM(userWithId); // Initialize FCM and save token
     }
     setLoading(false);
   }, []);
@@ -82,6 +85,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         const newUser: User = { id: userId, name, coins: 0 };
         await setDoc(doc(db, "users", userId), { name: newUser.name, coins: newUser.coins }, { merge: true });
         setUserState(newUser);
+        initializeFCM(newUser); // Initialize FCM and save token for new user
     } catch(err) {
         console.error("Error saving user to Firestore: ", err);
         setError("An error occurred. Please try again.");
@@ -94,9 +98,13 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     const userId = localStorage.getItem('userId');
     if (userId) {
         try {
-            await deleteDoc(doc(db, "users", userId));
+            // Optional: You might want to remove the FCM token from the user doc on logout
+            const userRef = doc(db, "users", userId);
+            await updateDoc(userRef, { fcmToken: "" });
+            // Or delete the user doc entirely if that's the desired behavior
+            // await deleteDoc(doc(db, "users", userId));
         } catch (err) {
-            console.error("Error deleting user from Firestore: ", err);
+            console.error("Error updating user on logout: ", err);
         } finally {
             localStorage.removeItem('userId');
             setUserState(null);

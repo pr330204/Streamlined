@@ -1,5 +1,6 @@
 import { initializeApp, getApp, getApps } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
+import { getMessaging } from 'firebase/messaging';
 
 const firebaseConfig = {
   "projectId": "cinefind-blty1",
@@ -14,5 +15,7 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const db = getFirestore(app);
+const messaging = (typeof window !== 'undefined') ? getMessaging(app) : null;
 
-export { app, db };
+
+export { app, db, messaging };
