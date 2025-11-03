@@ -62,8 +62,7 @@ export default function AdminActivityPanel() {
 
     const sessionsQuery = query(
         collection(db, "user-sessions"),
-        where("userId", "==", selectedUserId),
-        orderBy("startTime", "desc")
+        where("userId", "==", selectedUserId)
     );
     
     const unsubSessions = onSnapshot(sessionsQuery, (snapshot) => {
