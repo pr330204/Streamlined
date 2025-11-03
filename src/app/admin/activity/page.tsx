@@ -66,11 +66,11 @@ export default function AdminActivityPanel() {
     endOfDay.setHours(23, 59, 59, 999);
 
     const sessionsQuery = query(
-        collection(db, "user-sessions"), 
+        collection(db, "user-sessions"),
+        orderBy("startTime", "asc"),
         where("userId", "==", selectedUserId),
         where("startTime", ">=", Timestamp.fromDate(startOfDay)),
-        where("startTime", "<=", Timestamp.fromDate(endOfDay)),
-        orderBy("startTime", "asc")
+        where("startTime", "<=", Timestamp.fromDate(endOfDay))
     );
     
     const unsubSessions = onSnapshot(sessionsQuery, (snapshot) => {
@@ -84,6 +84,9 @@ export default function AdminActivityPanel() {
             } as UserSession;
         });
         setSessions(sessionsFromDb);
+        setLoading(false);
+    }, (error) => {
+        console.error("Error fetching sessions:", error);
         setLoading(false);
     });
 
