@@ -70,7 +70,7 @@ export default function AdminActivityPanel() {
         where("userId", "==", selectedUserId),
         where("startTime", ">=", Timestamp.fromDate(startOfDay)),
         where("startTime", "<=", Timestamp.fromDate(endOfDay)),
-        orderBy("startTime", "desc")
+        orderBy("startTime", "asc")
     );
     
     const unsubSessions = onSnapshot(sessionsQuery, (snapshot) => {
@@ -196,4 +196,3 @@ export default function AdminActivityPanel() {
     </div>
   );
 }
-
