@@ -6,6 +6,7 @@ import { BottomNav } from '@/components/bottom-nav';
 import Script from 'next/script';
 import { UserProvider } from '@/hooks/use-user';
 import NotificationListener from '@/components/NotificationListener';
+import UserActivityTracker from '@/components/UserActivityTracker';
 
 export const metadata: Metadata = {
   title: 'Streamlined',
@@ -29,6 +30,7 @@ export default function RootLayout({
       <body className="font-body antialiased">
         <UserProvider>
           <NotificationListener />
+          <UserActivityTracker />
           <div className="pb-20">
             {children}
           </div>

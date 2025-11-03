@@ -49,4 +49,10 @@ export interface ChatThread {
     lastUpdated: Timestamp;
 }
 
-    
+export interface UserSession {
+  id: string;
+  userId: string;
+  startTime: Timestamp;
+  endTime?: Timestamp;
+  duration?: number; // in seconds
+}
