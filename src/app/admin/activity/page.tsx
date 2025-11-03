@@ -29,7 +29,7 @@ import {
 } from "@/components/ui/table"
 import { cn } from "@/lib/utils";
 import { Calendar as CalendarIcon, User as UserIcon } from "lucide-react";
-import { format } from "date-fns";
+import { format, isSameDay } from "date-fns";
 
 export default function AdminActivityPanel() {
   const [users, setUsers] = useState<User[]>([]);
@@ -53,24 +53,17 @@ export default function AdminActivityPanel() {
   }, []);
   
   useEffect(() => {
-    if (!selectedUserId || !date) {
+    if (!selectedUserId) {
       setSessions([]);
       return;
     };
 
     setLoading(true);
 
-    const startOfDay = new Date(date);
-    startOfDay.setHours(0, 0, 0, 0);
-    const endOfDay = new Date(date);
-    endOfDay.setHours(23, 59, 59, 999);
-
     const sessionsQuery = query(
         collection(db, "user-sessions"),
-        orderBy("startTime", "asc"),
         where("userId", "==", selectedUserId),
-        where("startTime", ">=", Timestamp.fromDate(startOfDay)),
-        where("startTime", "<=", Timestamp.fromDate(endOfDay))
+        orderBy("startTime", "desc")
     );
     
     const unsubSessions = onSnapshot(sessionsQuery, (snapshot) => {
@@ -92,11 +85,18 @@ export default function AdminActivityPanel() {
 
     return () => unsubSessions();
 
-  }, [selectedUserId, date]);
+  }, [selectedUserId]);
+
+  const filteredSessions = useMemo(() => {
+    if (!date) return [];
+    return sessions.filter(session => 
+      session.startTime && isSameDay(session.startTime.toDate(), date)
+    );
+  }, [sessions, date]);
 
   const totalDuration = useMemo(() => {
-    return sessions.reduce((total, session) => total + (session.duration || 0), 0);
-  }, [sessions]);
+    return filteredSessions.reduce((total, session) => total + (session.duration || 0), 0);
+  }, [filteredSessions]);
 
   const formatDuration = (seconds: number) => {
     const h = Math.floor(seconds / 3600).toString().padStart(2, '0');
@@ -176,8 +176,8 @@ export default function AdminActivityPanel() {
                                 Loading sessions...
                                 </TableCell>
                             </TableRow>
-                        ) : sessions.length > 0 ? (
-                        sessions.map((session) => (
+                        ) : filteredSessions.length > 0 ? (
+                        filteredSessions.map((session) => (
                             <TableRow key={session.id}>
                             <TableCell>{session.startTime ? format(session.startTime.toDate(), 'p') : 'N/A'}</TableCell>
                              <TableCell>{session.endTime ? format(session.endTime.toDate(), 'p') : <span className="text-yellow-500">In Progress</span>}</TableCell>
