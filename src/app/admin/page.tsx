@@ -12,7 +12,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import AdminDeletePanel from "./delete/page";
 import AdminChatPanel from "./chat/page";
 import AdminUsersPanel from "./users/page";
-import { Video, Trash2, Users, MessageSquare } from "lucide-react";
+import AdminActivityPanel from "./activity/page";
+import { Video, Trash2, Users, MessageSquare, Timer } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import type { Movie } from "@/lib/types";
@@ -42,7 +43,7 @@ export default function AdminPage() {
 
   const handleAddMovie = async (movie: Omit<Movie, "id" | "votes" | "createdAt">) => {
     try {
-       const movieData = {
+      const movieData = {
         ...movie,
         votes: 0,
         createdAt: serverTimestamp(),
@@ -52,7 +53,7 @@ export default function AdminPage() {
       
       toast({
         title: "Success!",
-        description: "Video added successfully.",
+        description: "Content added successfully.",
       });
       setAddMovieOpen(false); // Close the dialog on success
     } catch (error) {
@@ -60,10 +61,11 @@ export default function AdminPage() {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Could not add the video. Please try again.",
+        description: "Could not add the content. Please try again.",
       });
     }
   };
+
 
   return (
     <div className="flex min-h-screen w-full flex-col bg-background text-foreground">
@@ -94,11 +96,12 @@ export default function AdminPage() {
             <Tabs defaultValue="add-video" className="w-full flex flex-col flex-1">
               <div className="flex items-center justify-between mb-6">
                 <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-                <TabsList>
+                <TabsList className="grid grid-cols-5">
                   <TabsTrigger value="add-video"><Video className="w-4 h-4 mr-2"/> Add Video</TabsTrigger>
                   <TabsTrigger value="delete-video"><Trash2 className="w-4 h-4 mr-2"/> Delete Video</TabsTrigger>
                   <TabsTrigger value="user-chats"><MessageSquare className="w-4 h-4 mr-2"/> User Chats</TabsTrigger>
                   <TabsTrigger value="user-coins"><Users className="w-4 h-4 mr-2"/> User Coins</TabsTrigger>
+                  <TabsTrigger value="user-activity"><Timer className="w-4 h-4 mr-2"/> User Activity</TabsTrigger>
                 </TabsList>
               </div>
 
@@ -121,6 +124,9 @@ export default function AdminPage() {
               <TabsContent value="user-coins">
                 <AdminUsersPanel />
               </TabsContent>
+               <TabsContent value="user-activity">
+                <AdminActivityPanel />
+              </TabsContent>
             </Tabs>
           )}
         </div>
@@ -133,5 +139,3 @@ export default function AdminPage() {
     </div>
   );
 }
-
-    
