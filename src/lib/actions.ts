@@ -37,6 +37,12 @@ export async function suggestMovieAction(values: SuggestMovieInput) {
 
 
 export async function sendNewContentNotification(movie: Movie) {
+  if (!adminDb || !adminMessaging) {
+    const errorMessage = "Firebase Admin SDK not initialized. Cannot send notifications.";
+    console.error(errorMessage);
+    return { success: false, message: errorMessage };
+  }
+
   try {
     const usersSnapshot = await getDocs(collection(adminDb, 'users'));
     

@@ -1,5 +1,6 @@
 
 import * as admin from 'firebase-admin';
+import 'dotenv/config';
 
 // IMPORTANT: This file should only be used in server-side code.
 
@@ -21,8 +22,22 @@ if (!admin.apps.length) {
   }
 }
 
-const adminDb = admin.firestore();
-const adminAuth = admin.auth();
-const adminMessaging = admin.messaging();
+function getAdminServices() {
+  if (!admin.apps.length) {
+    // Return mock or dummy objects if not initialized to prevent crashes
+    return {
+      adminDb: null,
+      adminAuth: null,
+      adminMessaging: null,
+    };
+  }
+  return {
+    adminDb: admin.firestore(),
+    adminAuth: admin.auth(),
+    adminMessaging: admin.messaging(),
+  };
+}
+
+const { adminDb, adminAuth, adminMessaging } = getAdminServices();
 
 export { adminDb, adminAuth, adminMessaging };
