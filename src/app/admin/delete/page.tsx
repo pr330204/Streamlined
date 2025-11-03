@@ -1,13 +1,13 @@
 
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useTransition } from "react";
 import { db } from "@/lib/firebase";
 import { collection, onSnapshot, doc, deleteDoc, query, orderBy, Timestamp } from "firebase/firestore";
 import type { Movie } from "@/lib/types";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Trash2 } from "lucide-react";
+import { Trash2, BellRing } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,12 +20,14 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { useToast } from "@/hooks/use-toast";
+import { sendNewContentNotification } from "@/lib/actions";
 
 
 export default function AdminDeletePanel() {
   const [movies, setMovies] = useState<Movie[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -71,6 +73,24 @@ export default function AdminDeletePanel() {
       });
     }
   };
+
+  const handleNotify = (movie: Movie) => {
+    startTransition(async () => {
+      const result = await sendNewContentNotification(movie);
+      if (result.success) {
+        toast({
+          title: "Success",
+          description: result.message || "Notifications sent to all users.",
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: result.message || "Failed to send notifications.",
+        });
+      }
+    });
+  }
   
   return (
     <div className="space-y-4">
@@ -101,29 +121,35 @@ export default function AdminDeletePanel() {
             filteredMovies.map(movie => (
               <div key={movie.id} className="flex items-center justify-between p-3 bg-card rounded-lg border">
                 <span className="font-medium truncate pr-4">{movie.title}</span>
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                      <Button variant="destructive" size="sm">
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        Delete
-                      </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        This action cannot be undone. This will permanently delete the video
-                          <span className="font-bold"> &quot;{movie.title}&quot;</span>.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={() => handleDeleteMovie(movie.id)}>
-                        Delete
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="sm" onClick={() => handleNotify(movie)} disabled={isPending}>
+                      <BellRing className="mr-2 h-4 w-4" />
+                      Notify
+                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                        <Button variant="destructive" size="sm">
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Delete
+                        </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This action cannot be undone. This will permanently delete the video
+                            <span className="font-bold"> &quot;{movie.title}&quot;</span>.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => handleDeleteMovie(movie.id)}>
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
               </div>
             ))
           ) : (
